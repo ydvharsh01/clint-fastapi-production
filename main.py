@@ -1,28 +1,28 @@
 import logging
+import os
+
 from fastapi import FastAPI
 
-# Application logger
 app_logger = logging.getLogger("clint-fastapi")
 app_logger.setLevel(logging.INFO)
 
-# Normal application logs
-app_handler = logging.FileHandler("/var/log/clint-fastapi/app.log")
-app_handler.setLevel(logging.INFO)
+log_dir = "/var/log/clint-fastapi"
 
-# Error logs
-error_handler = logging.FileHandler("/var/log/clint-fastapi/error.log")
-error_handler.setLevel(logging.ERROR)
+if os.path.isdir(log_dir) and os.access(log_dir, os.W_OK):
+    app_handler = logging.FileHandler(f"{log_dir}/app.log")
+    error_handler = logging.FileHandler(f"{log_dir}/error.log")
 
-# Log format
-formatter = logging.Formatter(
-    "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    )
 
-app_handler.setFormatter(formatter)
-error_handler.setFormatter(formatter)
+    app_handler.setFormatter(formatter)
+    error_handler.setFormatter(formatter)
 
-app_logger.addHandler(app_handler)
-app_logger.addHandler(error_handler)
+    app_logger.addHandler(app_handler)
+    app_logger.addHandler(error_handler)
+else:
+    app_logger.addHandler(logging.StreamHandler())
 
 
 app = FastAPI()
@@ -35,8 +35,6 @@ def startup_event():
 
 @app.get("/")
 def home():
-    app_logger.info("GET / request received")
-
     return {
         "message": "Hello from production server!",
         "status": "running"
@@ -45,8 +43,6 @@ def home():
 
 @app.get("/health")
 def health():
-    app_logger.info("GET /health request received")
-
     return {
         "status": "healthy"
     }
